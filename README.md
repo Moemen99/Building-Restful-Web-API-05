@@ -300,3 +300,60 @@ public void Configure(IApplicationBuilder app)
 
 ---
 **Note**: Custom middleware should be placed in the pipeline considering its dependencies and the order of execution needed for your application's requirements.
+
+
+# HttpContext and Next Delegate
+
+## HttpContext Overview
+- Contains all information about the HTTP request
+- Provides access to:
+  - Request details
+  - Response details
+  - User information
+  - Connection details
+
+## Next Delegate (RequestDelegate)
+- Represents the next middleware in the pipeline
+- Used to pass control to the next middleware
+- Important characteristics:
+  - Code before `next()` executes during request
+  - Code after `next()` executes during response
+  - If `next()` isn't called, pipeline stops at current middleware
+
+## Implementation in Custom Middleware
+
+```csharp
+public class CustomMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<CustomMiddleware> _logger;
+
+    // Constructor receives next delegate through DI
+    public CustomMiddleware(RequestDelegate next, ILogger<CustomMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    // Method handling the request/response
+    public async Task InvokeAsync(HttpContext context)
+    {
+        _logger.LogInformation("Processing request");
+        await _next(context);  // Pass to next middleware
+        _logger.LogInformation("Processing response");
+    }
+}
+```
+
+## Request Flow
+```mermaid
+graph LR
+    A[Request] --> B[Pre-processing]
+    B --> C[next()]
+    C --> D[Next Middleware]
+    D --> E[Post-processing]
+    E --> F[Response]
+```
+
+---
+**Note**: Understanding these concepts is essential for building custom middleware as they form the backbone of the ASP.NET Core request pipeline.
