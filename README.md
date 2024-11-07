@@ -140,3 +140,163 @@ public class CustomMiddleware
 
 ---
 **Note**: The correct ordering of middleware is crucial for application functionality and security. Incorrect ordering can lead to security vulnerabilities or pipeline short-circuits.
+
+
+# Implementing Custom Middleware
+
+## Approaches to Custom Middleware
+
+### 1. Inline Middleware (Not Recommended)
+```csharp
+// Program.cs
+var logger = app.Logger;
+app.Use(async (context, next) => {
+    logger.LogInformation("Processing request");
+    await next(context);
+    logger.LogInformation("Processing response");
+});
+```
+
+### 2. Conventional Middleware Class (Recommended)
+```csharp
+// CustomMiddleware.cs
+public class CustomMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ILogger<CustomMiddleware> _logger;
+
+    public CustomMiddleware(RequestDelegate next, ILogger<CustomMiddleware> logger)
+    {
+        _next = next;
+        _logger = logger;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        _logger.LogInformation("Processing request");
+        await _next(context);
+        _logger.LogInformation("Processing response");
+    }
+}
+
+// Usage in Program.cs
+app.UseMiddleware<CustomMiddleware>();
+```
+
+### 3. Extension Method Approach (Best Practice)
+```csharp
+// CustomMiddlewareExtensions.cs
+public static class CustomMiddlewareExtensions
+{
+    public static IApplicationBuilder UseCustomMiddleware(
+        this IApplicationBuilder builder)
+    {
+        return builder.UseMiddleware<CustomMiddleware>();
+    }
+}
+
+// Usage in Program.cs
+app.UseCustomMiddleware();
+```
+
+## Project Structure
+```
+YourProject/
+├── Middlewares/
+│   ├── CustomMiddleware.cs
+│   └── CustomMiddlewareExtensions.cs
+└── Program.cs
+```
+
+## Implementation Flow
+```mermaid
+graph TD
+    A[Create Middleware Folder] --> B[Create Middleware Class]
+    B --> C[Implement InvokeAsync]
+    C --> D[Create Extension Method]
+    D --> E[Register in Program.cs]
+    
+    style E fill:#98FB98
+```
+
+## Components Breakdown
+
+### 1. Middleware Class
+```mermaid
+classDiagram
+    class CustomMiddleware {
+        -RequestDelegate _next
+        -ILogger _logger
+        +CustomMiddleware(RequestDelegate, ILogger)
+        +InvokeAsync(HttpContext) Task
+    }
+```
+
+### 2. Extension Method
+```mermaid
+classDiagram
+    class CustomMiddlewareExtensions {
+        +UseCustomMiddleware(IApplicationBuilder) IApplicationBuilder$
+    }
+```
+
+## Comparison of Approaches
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| Inline | Quick to implement | Hard to maintain, Limited reusability |
+| Class-based | Organized, Reusable | More files to manage |
+| Extension Method | Clean syntax, Best practice | Additional setup required |
+
+## Best Practices
+
+1. **File Organization**
+   - Keep middleware in dedicated folder
+   - Use consistent naming conventions
+   - Separate class and extension files
+
+2. **Implementation**
+   - Use dependency injection
+   - Implement async patterns
+   - Handle exceptions properly
+
+3. **Naming Conventions**
+   ```
+   CustomMiddleware.cs           // Main middleware class
+   CustomMiddlewareExtensions.cs // Extension methods
+   UseCustomMiddleware()         // Extension method name
+   ```
+
+## Execution Flow Example
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Middleware
+    participant Next
+    participant Response
+
+    Client->>Middleware: Request
+    Note over Middleware: Log "Processing request"
+    Middleware->>Next: await next(context)
+    Next-->>Middleware: Response
+    Note over Middleware: Log "Processing response"
+    Middleware-->>Client: Final Response
+```
+
+## Registration in Pipeline
+```csharp
+public void Configure(IApplicationBuilder app)
+{
+    // Built-in middleware
+    app.UseHttpsRedirection();
+    
+    // Custom middleware
+    app.UseCustomMiddleware();
+    
+    // More built-in middleware
+    app.UseAuthorization();
+}
+```
+
+---
+**Note**: Custom middleware should be placed in the pipeline considering its dependencies and the order of execution needed for your application's requirements.
