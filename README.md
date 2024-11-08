@@ -353,6 +353,13 @@ graph LR
     C --> D[Next Middleware]
     D --> E[Post-processing]
     E --> F[Response]
+
+    style A fill:#87CEEB
+    style B fill:#98FB98
+    style C fill:#DDA0DD
+    style D fill:#98FB98
+    style E fill:#98FB98
+    style F fill:#87CEEB
 ```
 
 ---
