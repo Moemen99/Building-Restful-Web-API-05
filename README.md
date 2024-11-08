@@ -347,19 +347,18 @@ public class CustomMiddleware
 
 ## Request Flow
 ```mermaid
-graph LR
-    A[Request] --> B[Pre-processing]
-    B --> C[next()]
-    C --> D[Next Middleware]
-    D --> E[Post-processing]
-    E --> F[Response]
+sequenceDiagram
+    participant Request
+    participant Middleware
+    participant NextMiddleware
+    participant Response
 
-    style A fill:#87CEEB
-    style B fill:#98FB98
-    style C fill:#DDA0DD
-    style D fill:#98FB98
-    style E fill:#98FB98
-    style F fill:#87CEEB
+    Request->>Middleware: Request starts
+    Note over Middleware: Pre-processing
+    Middleware->>NextMiddleware: next()
+    NextMiddleware->>Middleware: Complete
+    Note over Middleware: Post-processing
+    Middleware->>Response: Response complete
 ```
 
 ---
